@@ -51,7 +51,7 @@ const main = async () => {
   postMessage({ action: 'READY' });
 };
 
-const matchOneAnd = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
+const matchOne = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
   if (rule.zi && rule.zi !== candidate.zi) return false;
   if (rule.initial && rule.initial !== candidate.initial) return false;
   if (rule.final && rule.final !== candidate.final) return false;
@@ -60,25 +60,16 @@ const matchOneAnd = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
   return true;
 };
 
-const matchOneOr = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
-  if (rule.zi && rule.zi === candidate.zi) return true;
-  if (rule.initial && rule.initial === candidate.initial) return true;
-  if (rule.final && rule.final === candidate.final) return true;
-  if (rule.tone && rule.tone === candidate.tone) return true;
-
-  return false;
-};
-
 const matchWord = (idiom: ParsedIdiom, rules: Rule[]): boolean => {
   const chars = idiom.parsed;
   if (chars.length !== rules.length) return false;
-  return chars.every((candidate, i) => matchOneAnd(candidate, rules[i]));
+  return chars.every((candidate, i) => matchOne(candidate, rules[i]));
 };
 
 const maybeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
   if (rules.length === 0) return true;
   return rules.every((rule) =>
-    idiom.parsed.some((hanzi) => matchOneAnd(hanzi, rule))
+    idiom.parsed.some((hanzi) => matchOne(hanzi, rule))
   );
 };
 
@@ -86,7 +77,7 @@ const maybeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
 const excludeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
   if (rules.length === 0) return false;
   return idiom.parsed.some((hanzi) =>
-    rules.some((rule) => matchOneAnd(hanzi, rule))
+    rules.some((rule) => matchOne(hanzi, rule))
   );
 };
 
@@ -96,15 +87,11 @@ const negativeWord = (idiom: ParsedIdiom, rules: Rule[][]): boolean => {
   if (chars.length !== rules.length) return false;
   for (let i = 0; i < chars.length; i++) {
     const char = chars[i];
-    if (rules[i].some((rule) => matchOneAnd(char, rule))) {
+    if (rules[i].some((rule) => matchOne(char, rule))) {
       return true;
     }
   }
   return false;
-  // return chars.some((candidate, i) => {
-  //   const rule = rules[i];
-  //   return matchOneOr(candidate, rule);
-  // });
 };
 
 const search = (ruleSet: RuleSet) => {
