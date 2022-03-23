@@ -62,6 +62,7 @@ import { Rule } from '@/types';
 import ToneSymbol from './ToneSymbol.vue';
 import PartCheckbox from './PartCheckbox.vue';
 import { cloneDeep } from 'lodash-es';
+import { EMPTY_RULE } from '@/utils';
 
 const props = defineProps<{
   rules: Rule[];
@@ -121,12 +122,5 @@ const setZi = (input: string) => {
       zi,
     }));
   emit('update:rules', [...rules, ...zis]);
-};
-
-const EMPTY_RULE: Rule = {
-  zi: undefined,
-  initial: undefined,
-  final: undefined,
-  tone: undefined,
 };
 </script>

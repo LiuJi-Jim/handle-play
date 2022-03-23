@@ -11,15 +11,6 @@ export default function useSearch(ruleSet: RuleSet) {
 
   const result = ref<WordWithFreq[] | null>(null);
 
-  for (let i = 0; i < 4; i++) {
-    ruleSet.exact.push({
-      zi: undefined,
-      initial: undefined,
-      final: undefined,
-      tone: undefined,
-    });
-  }
-
   const searchWorker = new SearchWorker();
 
   searchWorker.addEventListener('message', (e) => {

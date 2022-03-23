@@ -11,18 +11,32 @@
         </div>
       </NCollapseItem>
 
-      <NCollapseItem title="模糊搜" name="fuzzy">
+      <NCollapseItem title="模糊搜">
         <PartSelector
           v-model:rules="ruleSet.fuzzy"
           checked-class="!text-orange-300"
         />
       </NCollapseItem>
 
-      <NCollapseItem title="排除搜" name="negative">
-        <PartSelector
-          v-model:rules="ruleSet.negative"
-          checked-class="!text-red-700"
-        />
+      <NCollapseItem title="排除搜">
+        <NTabs type="line" size="small">
+          <NTabPane tab="全局排除" name="exclude">
+            <PartSelector
+              v-model:rules="ruleSet.exclude"
+              checked-class="!text-red-700"
+            />
+          </NTabPane>
+          <NTabPane
+            v-for="(neg, index) in ruleSet.negative"
+            :key="index"
+            :tab="`逐位排除-${index + 1}`"
+            :name="`negative-${index + 1}`"
+          >
+            <PartSelector
+              v-model:rules="ruleSet.negative[index]"
+              checked-class="!text-red-700"
+          /></NTabPane>
+        </NTabs>
       </NCollapseItem>
     </NCollapse>
 
@@ -44,17 +58,26 @@
 
 <script lang="ts" setup>
 import { reactive } from 'vue';
-import { NCollapse, NCollapseItem } from 'naive-ui';
+import { NCollapse, NCollapseItem, NTabs, NTabPane } from 'naive-ui';
 import { RuleSet } from '@/types';
 import HanziSelector from './HanziSelector.vue';
 import PartSelector from './PartSelector.vue';
 import { useSearch } from '@/composables';
+import { EMPTY_RULE } from '@/utils';
 
 const ruleSet = reactive<RuleSet>({
   exact: [],
   fuzzy: [],
+  exclude: [],
   negative: [],
 });
+
+for (let i = 0; i < 4; i++) {
+  ruleSet.exact.push({
+    ...EMPTY_RULE,
+  });
+  ruleSet.negative.push([]);
+}
 
 const { state: searchState, search, result } = useSearch(ruleSet);
 </script>

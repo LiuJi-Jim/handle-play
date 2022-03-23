@@ -7,6 +7,7 @@ import type {
 } from '@/types';
 import DICT_RAW from '@/assets/data/dict.txt?raw';
 import FREQ_RAW from '@/assets/data/freq.txt?raw';
+import { isEmptyRule } from '@/utils';
 
 const DICT: ParsedIdiom[] = [];
 const FREQ: Record<string, number> = {};
@@ -50,7 +51,7 @@ const main = async () => {
   postMessage({ action: 'READY' });
 };
 
-const matchOne = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
+const matchOneAnd = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
   if (rule.zi && rule.zi !== candidate.zi) return false;
   if (rule.initial && rule.initial !== candidate.initial) return false;
   if (rule.final && rule.final !== candidate.final) return false;
@@ -59,16 +60,25 @@ const matchOne = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
   return true;
 };
 
+const matchOneOr = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
+  if (rule.zi && rule.zi === candidate.zi) return true;
+  if (rule.initial && rule.initial === candidate.initial) return true;
+  if (rule.final && rule.final === candidate.final) return true;
+  if (rule.tone && rule.tone === candidate.tone) return true;
+
+  return false;
+};
+
 const matchWord = (idiom: ParsedIdiom, rules: Rule[]): boolean => {
-  const candidates = idiom.parsed;
-  if (candidates.length !== rules.length) return false;
-  return candidates.every((candidate, i) => matchOne(candidate, rules[i]));
+  const chars = idiom.parsed;
+  if (chars.length !== rules.length) return false;
+  return chars.every((candidate, i) => matchOneAnd(candidate, rules[i]));
 };
 
 const maybeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
   if (rules.length === 0) return true;
   return rules.every((rule) =>
-    idiom.parsed.some((hanzi) => matchOne(hanzi, rule))
+    idiom.parsed.some((hanzi) => matchOneAnd(hanzi, rule))
   );
 };
 
@@ -76,14 +86,34 @@ const maybeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
 const excludeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
   if (rules.length === 0) return false;
   return idiom.parsed.some((hanzi) =>
-    rules.some((rule) => matchOne(hanzi, rule))
+    rules.some((rule) => matchOneAnd(hanzi, rule))
   );
 };
 
+// returns true if should exclude `idiom`
+const negativeWord = (idiom: ParsedIdiom, rules: Rule[][]): boolean => {
+  const chars = idiom.parsed;
+  if (chars.length !== rules.length) return false;
+  for (let i = 0; i < chars.length; i++) {
+    const char = chars[i];
+    if (rules[i].some((rule) => matchOneAnd(char, rule))) {
+      return true;
+    }
+  }
+  return false;
+  // return chars.some((candidate, i) => {
+  //   const rule = rules[i];
+  //   return matchOneOr(candidate, rule);
+  // });
+};
+
 const search = (ruleSet: RuleSet) => {
-  const { exact, fuzzy, negative } = ruleSet;
+  const { exact, fuzzy, exclude, negative } = ruleSet;
   const result = DICT.filter((candidate) => {
-    if (excludeWord(candidate, negative)) {
+    if (excludeWord(candidate, exclude)) {
+      return false;
+    }
+    if (negativeWord(candidate, negative)) {
       return false;
     }
     if (!matchWord(candidate, exact)) {

@@ -15,7 +15,8 @@ export type Rule = Partial<ParsedHanzi>;
 export type RuleSet = {
   exact: Rule[];
   fuzzy: Rule[];
-  negative: Rule[];
+  exclude: Rule[]; // 全局排除
+  negative: Rule[][]; // 逐位排除
 };
 
 export type WordWithFreq = {
