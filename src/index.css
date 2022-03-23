@@ -16,6 +16,6 @@
     @apply py-0.5 px-1 border-b border-gray-500/20;
   }
   .flexible-grid {
-    @apply grid grid-cols-4 sm:grid-cols-8 md:grid-cols-12 gap-x-1 gap-y-2;
+    @apply grid grid-cols-6 sm:grid-cols-8 md:grid-cols-16 gap-x-1 gap-y-2;
   }
 }

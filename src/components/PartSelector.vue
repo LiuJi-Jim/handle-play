@@ -67,12 +67,12 @@ import { EMPTY_RULE } from '@/utils';
 const props = defineProps<{
   rules: Rule[];
   checkedClass: string;
+  exclusive: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: 'update:rules', rules: Rule[]): void;
 }>();
-
 function getChecked<K extends keyof Rule>(key: K, value: Rule[K]): boolean {
   return props.rules.some((rule) => rule[key] === value);
 }
@@ -87,7 +87,10 @@ function setChecked<K extends keyof Rule>(
     if (index >= 0) {
       throw 'should never reach';
     } else {
-      const rules = cloneDeep(props.rules);
+      let rules = cloneDeep(props.rules);
+      if (props.exclusive) {
+        rules = rules.filter((rule) => !rule[key]);
+      }
       rules.push({
         ...EMPTY_RULE,
         [key]: value,

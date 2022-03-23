@@ -13,13 +13,14 @@ export type ParsedIdiom = {
 export type Rule = Partial<ParsedHanzi>;
 
 export type RuleSet = {
-  exact: Rule[];
-  fuzzy: Rule[];
+  exact: Rule[][]; // 绿色
+  fuzzy: Rule[][]; // 橙色
   exclude: Rule[]; // 全局排除
-  negative: Rule[][]; // 逐位排除
 };
 
 export type WordWithFreq = {
   word: string;
   freq: number;
 };
+
+export type PartState = 'none' | 'exact' | 'fuzzy' | 'exclude';

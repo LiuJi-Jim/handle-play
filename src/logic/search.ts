@@ -7,7 +7,6 @@ import type {
 } from '@/types';
 import DICT_RAW from '@/assets/data/dict.txt?raw';
 import FREQ_RAW from '@/assets/data/freq.txt?raw';
-import { isEmptyRule } from '@/utils';
 
 const DICT: ParsedIdiom[] = [];
 const FREQ: Record<string, number> = {};
@@ -51,62 +50,69 @@ const main = async () => {
   postMessage({ action: 'READY' });
 };
 
-const matchOne = (candidate: Partial<ParsedHanzi>, rule: Rule) => {
-  if (rule.zi && rule.zi !== candidate.zi) return false;
-  if (rule.initial && rule.initial !== candidate.initial) return false;
-  if (rule.final && rule.final !== candidate.final) return false;
-  if (rule.tone && rule.tone !== candidate.tone) return false;
+const matchOne = (
+  candidate: Partial<ParsedHanzi>,
+  rule: Rule,
+  logic: 'AND' | 'OR' = 'AND'
+) => {
+  if (logic === 'AND') {
+    if (rule.zi && rule.zi !== candidate.zi) return false;
+    if (rule.initial && rule.initial !== candidate.initial) return false;
+    if (rule.final && rule.final !== candidate.final) return false;
+    if (rule.tone && rule.tone !== candidate.tone) return false;
 
-  return true;
+    return true;
+  } else {
+    if (rule.zi && rule.zi === candidate.zi) return true;
+    if (rule.initial && rule.initial === candidate.initial) return true;
+    if (rule.final && rule.final === candidate.final) return true;
+    if (rule.tone && rule.tone === candidate.tone) return true;
+
+    return false;
+  }
 };
 
-const matchWord = (idiom: ParsedIdiom, rules: Rule[]): boolean => {
+const exactMatch = (idiom: ParsedIdiom, rules: Rule[][]): boolean => {
   const chars = idiom.parsed;
   if (chars.length !== rules.length) return false;
-  return chars.every((candidate, i) => matchOne(candidate, rules[i]));
-};
-
-const maybeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
-  if (rules.length === 0) return true;
-  return rules.every((rule) =>
-    idiom.parsed.some((hanzi) => matchOne(hanzi, rule))
+  // 绿色标记的每一位都要匹配
+  return chars.every((char, i) =>
+    rules[i].every((rule) => matchOne(char, rule))
   );
 };
 
+const fuzzyMatch = (idiom: ParsedIdiom, rules: Rule[][]): boolean => {
+  const chars = idiom.parsed;
+  if (chars.length !== rules.length) return false;
+
+  // 不能在黄色标记的那一位匹配
+  if (chars.some((char, i) => rules[i].some((rule) => matchOne(char, rule)))) {
+    return false;
+  }
+  // 但是所有规则最终都必须匹配
+  return rules
+    .flat()
+    .every((rule) => chars.some((char) => matchOne(char, rule)));
+};
+
 // returns true if should exclude `idiom`
-const excludeWord = (idiom: ParsedIdiom, rules: Rule[]) => {
+const excludeMatch = (idiom: ParsedIdiom, rules: Rule[]) => {
+  // 只要任意一个匹配就匹配
   if (rules.length === 0) return false;
   return idiom.parsed.some((hanzi) =>
     rules.some((rule) => matchOne(hanzi, rule))
   );
 };
 
-// returns true if should exclude `idiom`
-const negativeWord = (idiom: ParsedIdiom, rules: Rule[][]): boolean => {
-  const chars = idiom.parsed;
-  if (chars.length !== rules.length) return false;
-  for (let i = 0; i < chars.length; i++) {
-    const char = chars[i];
-    if (rules[i].some((rule) => matchOne(char, rule))) {
-      return true;
-    }
-  }
-  return false;
-};
-
 const search = (ruleSet: RuleSet) => {
-  const { exact, fuzzy, exclude, negative } = ruleSet;
-  const result = DICT.filter((candidate) => {
-    if (excludeWord(candidate, exclude)) {
+  const result = DICT.filter((idiom) => {
+    if (excludeMatch(idiom, ruleSet.exclude)) {
       return false;
     }
-    if (negativeWord(candidate, negative)) {
+    if (!exactMatch(idiom, ruleSet.exact)) {
       return false;
     }
-    if (!matchWord(candidate, exact)) {
-      return false;
-    }
-    if (!maybeWord(candidate, fuzzy)) {
+    if (!fuzzyMatch(idiom, ruleSet.fuzzy)) {
       return false;
     }
     return true;
@@ -124,6 +130,7 @@ const search = (ruleSet: RuleSet) => {
 self.addEventListener('message', (e) => {
   if (e.data && e.data.action === 'SEARCH') {
     const ruleSet = e.data.ruleSet as RuleSet;
+    console.log('search', JSON.stringify(ruleSet, null, '  '));
     search(ruleSet);
   }
 });

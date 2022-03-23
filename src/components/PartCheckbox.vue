@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex justify-center items-center text-gray-500/60 hover:bg-gray-200/40 cursor-default select-none"
+    class="flex justify-center items-center text-gray-800/60 hover:bg-gray-200/40 cursor-default select-none"
     :class="{
       [checkedClass]: checked,
     }"
