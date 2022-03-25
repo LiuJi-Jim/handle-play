@@ -8,15 +8,15 @@
     >
       <template #header>
         <div class="flex items-center gap-2">
-          搜出来这些
+          <span>搜出来这些</span>
           <span v-if="resultList.length > 0" class="text-gray-700/50">
             ({{ resultList.length }})
           </span>
           <button class="icon-btn" @click="state.sort = !state.sort">
             <mdi:sort-ascending
-              class="w-5 h-5"
+              class="w-5 h-5 mt-[2px]"
               :class="{
-                ' text-green-500': state.sort,
+                'text-green-500': state.sort,
               }"
             />
           </button>
