@@ -57,7 +57,7 @@
 
   <div class="text-center bg-white fixed bottom-0 left-0 right-0">
     <button
-      class="btn btn-primary py-2 text-xl flex w-full"
+      class="btn btn-primary py-2 text-xl flex w-full sm:w-[30rem] md:w-[36rem] mx-auto"
       :disabled="!searchState.ready || searchState.busy"
       @click="search"
     >
